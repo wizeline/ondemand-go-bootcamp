@@ -1,6 +1,8 @@
 package registry
 
-import "github.com/GerardoHP/ondemand-go-bootcamp/interface/controller"
+import (
+	"github.com/GerardoHP/ondemand-go-bootcamp/interface/controller"
+)
 
 type registry struct {
 	fileName string
@@ -15,5 +17,5 @@ func NewRegistry(fn string) Registry {
 }
 
 func (r *registry) NewAppController() controller.AppController {
-	return r.NewAppController()
+	return r.NewPokemonController()
 }

@@ -3,20 +3,18 @@ package model
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 )
-
-// const(
-// 	const c string="pokemons.csv"
-// )
 
 const (
 	fileName string = "pokemons.csv"
 )
 
 type Pokemon struct {
-	ID   string
+	ID   int
 	Name string
+	Url  string
 }
 
 func (p Pokemon) String() string {
@@ -28,9 +26,19 @@ func FileName() string { return fileName }
 
 func ToPokemon(s string) (*Pokemon, error) {
 	str := strings.Split(s, ",")
-	if len(str) != 2 {
-		return &Pokemon{}, errors.New("It's not a Pokemon")
+	if len(str) != 3 {
+		return &Pokemon{}, errors.New("it's not a pokemon")
 	}
 
-	return &Pokemon{ID: str[0], Name: str[1]}, nil
+	id, err := strconv.ParseInt(str[0], 10, 8)
+
+	if err != nil {
+		panic("id is not int")
+	}
+
+	return &Pokemon{
+		ID:   int(id),
+		Name: strings.Trim(str[1], " "),
+		Url:  strings.Trim(str[2], " "),
+	}, nil
 }

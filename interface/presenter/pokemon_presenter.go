@@ -1,6 +1,10 @@
 package presenter
 
-import "github.com/GerardoHP/ondemand-go-bootcamp/domain/model"
+import (
+	"strings"
+
+	"github.com/GerardoHP/ondemand-go-bootcamp/domain/model"
+)
 
 type pokemonPresenter struct {
 }
@@ -15,7 +19,7 @@ func NewPokemonPresenter() PokemonPresenter {
 
 func (pp *pokemonPresenter) ResponsePresenter(pk []*model.Pokemon) []*model.Pokemon {
 	for _, p := range pk {
-		p.Name = p.String()
+		p.Name = strings.ToUpper(p.Name)
 	}
 
 	return pk
