@@ -2,78 +2,87 @@ package repository
 
 import (
 	"encoding/csv"
-	"github.com/marcos-wz/capstone-go-bootcamp/internal/configuration"
-	"github.com/marcos-wz/capstone-go-bootcamp/internal/entity"
-	"github.com/marcos-wz/capstone-go-bootcamp/internal/logger"
+	"errors"
+	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"strconv"
-)
+	"strings"
 
-// TODO: create filter types on package custom-type
+	"github.com/marcos-wz/capstone-go-bootcamp/internal/configuration"
+	"github.com/marcos-wz/capstone-go-bootcamp/internal/entity"
+	"github.com/marcos-wz/capstone-go-bootcamp/internal/logger"
+)
 
 var _ Fruit = &fruitCsv{}
 
-func NewFruitCsv(cfg configuration.CsvDB) Fruit {
-	logger.Log().Debug().Str("repository", "FruitCsv").Str("file", cfg.FilePath()).
+func NewFruitCsv(cfg configuration.CsvDB) (Fruit, error) {
+	if err := validateDataFile(cfg.FilePath()); err != nil {
+		return nil, &CsvErr{err}
+	}
+
+	logger.Log().Debug().
+		Str("type", "FruitCsv").
+		Str("file", cfg.FilePath()).
 		Msg("created repository")
 	return &fruitCsv{
-		cfg:          cfg,
-		numRecFields: reflect.TypeOf(entity.Fruit{}).NumField(),
-	}
+		cfg:       cfg,
+		numFields: reflect.TypeOf(entity.Fruit{}).NumField(),
+	}, nil
 }
 
 type fruitCsv struct {
-	cfg          configuration.CsvDB
-	numRecFields int
+	cfg       configuration.CsvDB
+	numFields int
 }
 
-func (f fruitCsv) Read(filter, value string) ([]entity.Fruit, error) {
-	if filter == "" {
-		return nil, ErrFilterEmpty
-	}
+func (f fruitCsv) ReadAll() (entity.Fruits, error) {
+	filePath := f.cfg.FilePath()
 
-	recs, err := f.getRecords()
+	fd, err := os.Open(filePath)
 	if err != nil {
-		return nil, newCsvErr(err)
+		logger.Log().Error().Err(err).
+			Str("file", filePath).
+			Msg("ReadAll: open csv file failed")
+		return nil, &CsvErr{err}
 	}
-
-	switch filter {
-	case "id":
-		id, err := strconv.Atoi(value)
-		if err != nil {
-			return nil, newCsvErr(err)
+	defer func() {
+		if err := fd.Close(); err != nil {
+			logger.Log().Error().Err(err).
+				Str("file", filePath).
+				Msg("ReadAll: close csv file failed")
 		}
-		return f.getById(id, recs), nil
-	case "name":
-		return f.getByName(value, recs), nil
-	case "color":
-		return f.getByColor(value, recs), nil
-	case "country":
-		return f.getByCountry(value, recs), nil
-	}
+	}()
 
-	logger.Log().Error().Str("filter", filter).
-		Str("method", "Read").
-		Msgf("invalid csv filter")
-	return nil, ErrInvalidFilter
-}
+	r := csv.NewReader(fd)
+	fruits := entity.Fruits{}
+	for line := 1; true; line++ {
+		rec, err := r.Read()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			logger.Log().Warn().Err(err).
+				Int("line", line).
+				Str("file_path", filePath).
+				Str("record", strings.Join(rec[:], ",")).
+				Msgf("ReadAll: reading csv record failed, discarded record")
+			continue
+		}
 
-func (f fruitCsv) ReadAll() ([]entity.Fruit, error) {
-	recs, err := f.getRecords()
-	if err != nil {
-		logger.Log().Error().Str("Method", "ReadAll").
-			Msgf("getting record failed")
-		return nil, newCsvErr(err)
-	}
-	var fruits []entity.Fruit
-	for _, rec := range recs {
 		fruit, err := f.parseFruit(rec)
 		if err != nil {
+			logger.Log().Warn().Err(err).
+				Int("line", line).
+				Str("file_path", filePath).
+				Str("record", strings.Join(rec[:], ",")).
+				Msg("ReadAll: parsing record failed, discarded record")
 			continue
 		}
 		fruits = append(fruits, fruit)
 	}
+
 	return fruits, nil
 }
 
@@ -82,131 +91,58 @@ func (f fruitCsv) Create(_ entity.Fruit) error {
 	return nil
 }
 
-func (f fruitCsv) CreateAll(_ []entity.Fruit) error {
+func (f fruitCsv) CreateAll(_ entity.Fruits) error {
 	// TODO: implement me
 	return nil
 }
 
-func (f fruitCsv) getById(id int, recs [][]string) []entity.Fruit {
-	var fruits []entity.Fruit
-	for _, rec := range recs {
-		fruit, err := f.parseFruit(rec)
-		if err != nil {
-			continue
-		}
-		if id == fruit.ID {
-			fruits = append(fruits, fruit)
-		}
-	}
-	return fruits
-}
+func (f fruitCsv) parseFruit(record []string) (entity.Fruit, error) {
 
-func (f fruitCsv) getByName(name string, recs [][]string) []entity.Fruit {
-	var fruits []entity.Fruit
-	for _, rec := range recs {
-		fruit, err := f.parseFruit(rec)
-		if err != nil {
-			continue
-		}
-		if name == fruit.Name {
-			fruits = append(fruits, fruit)
-		}
-	}
-	return fruits
-}
-
-func (f fruitCsv) getByColor(color string, recs [][]string) []entity.Fruit {
-	var fruits []entity.Fruit
-	for _, rec := range recs {
-		fruit, err := f.parseFruit(rec)
-		if err != nil {
-			continue
-		}
-		if color == fruit.Color {
-			fruits = append(fruits, fruit)
-		}
-	}
-	return fruits
-}
-
-func (f fruitCsv) getByCountry(country string, recs [][]string) []entity.Fruit {
-	var fruits []entity.Fruit
-	for _, rec := range recs {
-		fruit, err := f.parseFruit(rec)
-		if err != nil {
-			continue
-		}
-		if country == fruit.Country {
-			fruits = append(fruits, fruit)
-		}
-	}
-	return fruits
-}
-
-func (f fruitCsv) getRecords() ([][]string, error) {
-	filePath := f.cfg.FilePath()
-	fd, err := os.Open(filePath)
-	if err != nil {
-		logger.Log().Error().Err(err).Str("file", filePath).
-			Msg("getRecords: open csv file failed")
-		return nil, newCsvErr(err)
-	}
-	defer func() {
-		if err := fd.Close(); err != nil {
-			logger.Log().Error().Err(err).Str("file", filePath).
-				Msg("getRecords: close csv file failed")
-		}
-	}()
-	return csv.NewReader(fd).ReadAll()
-}
-
-func (f fruitCsv) parseFruit(rec []string) (entity.Fruit, error) {
-
-	if len(rec) > f.numRecFields {
+	if len(record) != f.numFields {
 		logger.Log().Warn().
-			Int("max", f.numRecFields).
-			Int("current", len(rec)).
-			Msg("number of record fields exceeded")
+			Str("required", fmt.Sprintf("%d/%d", len(record), f.numFields)).
+			Str("record", strings.Join(record[:], ",")).
+			Msg("parseFruit: wrong number of record fields")
 	}
 
-	recAux := make([]string, f.numRecFields)
-	copy(recAux, rec)
-	//fmt.Println("Rec:", rec)
-	//fmt.Println("RecAux:", recAux)
+	rec := make([]string, f.numFields)
+	copy(rec, record)
 
-	recID, err := strconv.Atoi(recAux[0])
+	recID, err := strconv.Atoi(rec[0])
 	if err != nil {
-		logger.Log().Error().Err(err).Str("id", recAux[0]).Msgf("error parsing id field")
+		logger.Log().Error().Err(err).
+			Str("id", rec[0]).
+			Msgf("parseFruit: error parsing id field")
 		return entity.Fruit{}, err
 	}
 
-	//expDate, err := time.Parse(time.RFC3339, recAux[5])
+	//expDate, err := time.Parse(time.RFC3339, rec[5])
 	//if err != nil {
-	//	logger.Log().Error().Err(err).Str("expiration_date", recAux[5]).
+	//	logger.Log().Error().Err(err).Str("expiration_date", rec[5]).
 	//		Msgf("error parsing expiration_date field")
 	//	return entity.Fruit{}, err
 	//}
 	//
-	//createdAt, err := time.Parse(time.RFC3339, recAux[6])
+	//createdAt, err := time.Parse(time.RFC3339, rec[6])
 	//if err != nil {
-	//	logger.Log().Error().Err(err).Str("created_at", recAux[6]).
+	//	logger.Log().Error().Err(err).Str("created_at", rec[6]).
 	//		Msgf("error parsing created_at field")
 	//	return entity.Fruit{}, err
 	//}
 	//
-	//updatedAt, err := time.Parse(time.RFC3339, recAux[7])
+	//updatedAt, err := time.Parse(time.RFC3339, rec[7])
 	//if err != nil {
-	//	logger.Log().Error().Err(err).Str("updated_at", recAux[7]).
+	//	logger.Log().Error().Err(err).Str("updated_at", rec[7]).
 	//		Msgf("error parsing updated_at field")
 	//	return entity.Fruit{}, err
 	//}
 
 	return entity.Fruit{
 		ID:          recID,
-		Name:        recAux[1],
-		Description: recAux[2],
-		Color:       recAux[3],
-		Country:     recAux[4],
+		Name:        rec[1],
+		Description: rec[2],
+		Color:       rec[3],
+		Country:     rec[4],
 		//ExpirationDate: expDate,
 		//CreatedAt:      createdAt,
 		//UpdatedAt:      updatedAt,

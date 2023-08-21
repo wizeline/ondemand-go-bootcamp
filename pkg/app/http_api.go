@@ -42,7 +42,10 @@ func NewApiHTTP() (ApiHTTP, func(), error) {
 	logger.Log().Debug().Str("type", dbDrv.String()).Msg("database driver")
 
 	// Dependencies
-	fruitRepo := repository.NewFruitCsv(cfg.Database.CSV)
+	fruitRepo, err := repository.NewFruitCsv(cfg.Database.CSV)
+	if err != nil {
+		return nil, nil, err
+	}
 	fruitSvc := service.NewFruit(fruitRepo)
 
 	// Routes

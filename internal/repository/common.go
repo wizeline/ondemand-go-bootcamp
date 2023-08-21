@@ -1,4 +1,4 @@
-package utils
+package repository
 
 import (
 	"os"
@@ -6,9 +6,9 @@ import (
 
 const dataFileMode = "-rw-------"
 
-func ValidateDataFile(filePath string) error {
+func validateDataFile(filePath string) error {
 	if filePath == "" {
-		return ErrDataFilePathEmpty
+		return ErrFilePathEmpty
 	}
 
 	fInfo, err := os.Stat(filePath)
@@ -16,10 +16,10 @@ func ValidateDataFile(filePath string) error {
 		return err
 	}
 	if fInfo.IsDir() {
-		return ErrDataFileIsDir
+		return ErrFilePathIsDir
 	}
 	if fInfo.Mode().String() != dataFileMode {
-		return ErrDataFileInvalidMode
+		return ErrFileModeInvalid
 	}
 
 	return nil

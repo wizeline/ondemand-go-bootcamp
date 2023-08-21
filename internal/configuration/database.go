@@ -1,7 +1,7 @@
 package configuration
 
 import (
-	"fmt"
+	"path/filepath"
 )
 
 var (
@@ -44,5 +44,5 @@ func (c csvDB) DataDir() string {
 }
 
 func (c csvDB) FilePath() string {
-	return fmt.Sprintf("%s/%s", c.dataDir, c.fileName)
+	return filepath.Join(c.dataDir, c.fileName)
 }

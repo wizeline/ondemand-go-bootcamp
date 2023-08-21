@@ -5,10 +5,10 @@ import "fmt"
 var _ fmt.Stringer = FilterFruitType("")
 
 const (
-	UndefinedFilterFruit FilterFruitType = "undefined"
-	IdFilterFruit        FilterFruitType = "id"
-	NameFilterFruit      FilterFruitType = "name"
-	ColorFilterFruit     FilterFruitType = "color"
+// UndefinedFilterFruit FilterFruitType = "undefined"
+// IdFilterFruit        FilterFruitType = "id"
+// NameFilterFruit      FilterFruitType = "name"
+// ColorFilterFruit     FilterFruitType = "color"
 )
 
 type FilterFruitType string
@@ -22,15 +22,15 @@ type FilterFruit struct {
 	Value  string
 }
 
-func NewFilterFruitType(filter string) FilterFruitType {
-	switch filter {
-	case IdFilterFruit.String():
-		return IdFilterFruit
-	case NameFilterFruit.String():
-		return NameFilterFruit
-	case ColorFilterFruit.String():
-		return ColorFilterFruit
-	default:
-		return UndefinedFilterFruit
-	}
-}
+//func NewFilterFruitType(filter string) FilterFruitType {
+//	switch filter {
+//	case IdFilterFruit.String():
+//		return IdFilterFruit
+//	case NameFilterFruit.String():
+//		return NameFilterFruit
+//	case ColorFilterFruit.String():
+//		return ColorFilterFruit
+//	default:
+//		return UndefinedFilterFruit
+//	}
+//}

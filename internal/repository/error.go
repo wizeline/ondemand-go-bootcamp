@@ -1,24 +1,24 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 )
 
-const (
-	ErrFilterEmpty   Err = "filter empty"
-	ErrInvalidFilter Err = "invalid filter"
+var (
+	ErrFilePathEmpty   = errors.New("data file path empty")
+	ErrFilePathIsDir   = errors.New("data file path is a directory")
+	ErrFileModeInvalid = errors.New("invalid data file mode")
 )
 
-type Err string
-
-func (e Err) Error() string {
-	return fmt.Sprintf("repository: %v", e.String())
+type CsvErr struct {
+	Err error
 }
 
-func (e Err) String() string {
-	return string(e)
+func (e CsvErr) Error() string {
+	return fmt.Sprintf("csv: %s", e.Err)
 }
 
-func newCsvErr(err error) Err {
-	return Err(fmt.Sprintf("csv: %s", err))
+func (e CsvErr) Unwrap() error {
+	return e.Err
 }
