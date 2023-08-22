@@ -7,6 +7,7 @@ import (
 	"reflect"
 
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/repository"
+	"github.com/marcos-wz/capstone-go-bootcamp/internal/service"
 )
 
 type errHTTP struct {
@@ -23,7 +24,10 @@ func errHTTPResponse(w http.ResponseWriter, err error) {
 }
 
 func newErrHTTP(err error) errHTTP {
-	var repoCsvErr *repository.CsvErr
+	var (
+		repoCsvErr   *repository.CsvErr
+		svcFilterErr *service.FilterErr
+	)
 
 	switch {
 
@@ -34,15 +38,14 @@ func newErrHTTP(err error) errHTTP {
 			ErrorType: "RepositoryCSVError",
 			Message:   err.Error(),
 		}
-	// TODO: migrate this validation to the controller
-	//case errors.Is(err, repository.ErrInvalidFilter):
-	//	return errHTTP{
-	//		Code:      http.StatusBadRequest,
-	//		ErrorType: "RepositoryError",
-	//		Message:   err.Error(),
-	//	}
 
 	// ########### SERVICE ERRORS ###########
+	case errors.As(err, &svcFilterErr):
+		return errHTTP{
+			Code:      http.StatusUnprocessableEntity,
+			ErrorType: "ServiceFilterError",
+			Message:   err.Error(),
+		}
 
 	// ########### CONTROLLER ERRORS ###########
 

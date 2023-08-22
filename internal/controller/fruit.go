@@ -21,8 +21,8 @@ type FruitHTTP interface {
 }
 
 type FruitSvc interface {
-	Get(filter, value string) ([]entity.Fruit, error)
-	GetAll() ([]entity.Fruit, error)
+	Get(filter, value string) (entity.Fruits, error)
+	GetAll() (entity.Fruits, error)
 }
 
 type fruitHTTP struct {
@@ -44,10 +44,7 @@ func (f fruitHTTP) GetFruit(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	vars := mux.Vars(r)
 
-	filter := vars["filter"]
-	value := vars["value"]
-
-	fruit, err := f.svc.Get(filter, value)
+	fruit, err := f.svc.Get(vars["filter"], vars["value"])
 	if err != nil {
 		errHTTPResponse(w, err)
 		return

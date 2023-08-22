@@ -1,15 +1,34 @@
 package service
 
 import (
+	"fmt"
+	"strconv"
+
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/entity"
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/logger"
 )
 
+const (
+	idFilter      FilterFruit = "id"
+	nameFilter    FilterFruit = "name"
+	colorFilter   FilterFruit = "color"
+	countryFilter FilterFruit = "country"
+)
+
+var _ fmt.Stringer = FilterFruit("")
+
+var filterFruitMap = map[string]FilterFruit{
+	"id":      idFilter,
+	"name":    nameFilter,
+	"color":   colorFilter,
+	"country": countryFilter,
+}
+
 var _ Fruit = &fruit{}
 
 type Fruit interface {
-	Get(filter, value string) ([]entity.Fruit, error)
-	GetAll() ([]entity.Fruit, error)
+	Get(filter, value string) (entity.Fruits, error)
+	GetAll() (entity.Fruits, error)
 }
 
 type FruitRepo interface {
@@ -18,6 +37,12 @@ type FruitRepo interface {
 
 type fruit struct {
 	repo FruitRepo
+}
+
+type FilterFruit string
+
+func (f FilterFruit) String() string {
+	return string(f)
 }
 
 func NewFruit(repo FruitRepo) Fruit {
@@ -29,150 +54,82 @@ func NewFruit(repo FruitRepo) Fruit {
 	}
 }
 
-func (f fruit) Get(_, _ string) ([]entity.Fruit, error) {
+func (f fruit) Get(filter, value string) (entity.Fruits, error) {
+	if value == "" {
+		return nil, &FilterErr{ErrFilterValueEmpty}
+	}
+	filterType, found := filterFruitMap[filter]
+	if !found {
+		return nil, &FilterErr{ErrFilterNotSupported}
+	}
+
+	recs, err := f.repo.ReadAll()
+	if err != nil {
+		return nil, err
+	}
+
+	switch filterType {
+	case idFilter:
+		id, e := strconv.Atoi(value)
+		if e != nil {
+			return nil, &FilterErr{e}
+		}
+		return f.getById(id, recs), nil
+	case nameFilter:
+		return f.getByName(value, recs), nil
+	case colorFilter:
+		return f.getByColor(value, recs), nil
+	case countryFilter:
+		return f.getByCountry(value, recs), nil
+	default:
+		logger.Log().Error().Err(ErrFilterNotImplemented).
+			Str("filter_type", filterType.String()).
+			Str("value", value).
+			Msgf("getting fruit records failed")
+		return nil, &FilterErr{ErrFilterNotImplemented}
+	}
+}
+
+func (f fruit) GetAll() (entity.Fruits, error) {
 	return f.repo.ReadAll()
 }
 
-//func (f fruitCsv) Read(filter, value string) ([]entity.Fruit, error) {
-//	if filter == "" {
-//		return nil, ErrFilterEmpty
-//	}
-//
-//	recs, err := f.getRecords()
-//	if err != nil {
-//		return nil, newCsvErr(err)
-//	}
-//
-//	switch filter {
-//	case "id":
-//		id, err := strconv.Atoi(value)
-//		if err != nil {
-//			return nil, newCsvErr(err)
-//		}
-//		return f.ReadById(id, recs), nil
-//	case "name":
-//		return f.ReadByName(value, recs), nil
-//	case "color":
-//		return f.ReadByColor(value, recs), nil
-//	case "country":
-//		return f.ReadByCountry(value, recs), nil
-//	}
-//
-//	logger.Log().Error().Str("filter", filter).
-//		Str("method", "Read").
-//		Msgf("invalid csv filter")
-//	return nil, ErrInvalidFilter
-//}
-
-func (f fruit) GetAll() ([]entity.Fruit, error) {
-	return f.repo.ReadAll()
+func (f fruit) getById(id int, recs entity.Fruits) entity.Fruits {
+	fruits := entity.Fruits{}
+	for _, rec := range recs {
+		if id == rec.ID {
+			fruits = append(fruits, rec)
+		}
+	}
+	return fruits
 }
 
-//func (f fruitCsv) ReadById(id int, recs [][]string) []entity.Fruit {
-//	var fruits []entity.Fruit
-//	for _, rec := range recs {
-//		fruit, err := f.parseFruit(rec)
-//		if err != nil {
-//			continue
-//		}
-//		if id == fruit.ID {
-//			fruits = append(fruits, fruit)
-//		}
-//	}
-//	return fruits
-//}
-//
-//func (f fruitCsv) ReadByName(name string, recs [][]string) []entity.Fruit {
-//	var fruits []entity.Fruit
-//	for _, rec := range recs {
-//		fruit, err := f.parseFruit(rec)
-//		if err != nil {
-//			continue
-//		}
-//		if name == fruit.Name {
-//			fruits = append(fruits, fruit)
-//		}
-//	}
-//	return fruits
-//}
-//
-//func (f fruitCsv) ReadByColor(color string, recs [][]string) []entity.Fruit {
-//	var fruits []entity.Fruit
-//	for _, rec := range recs {
-//		fruit, err := f.parseFruit(rec)
-//		if err != nil {
-//			continue
-//		}
-//		if color == fruit.Color {
-//			fruits = append(fruits, fruit)
-//		}
-//	}
-//	return fruits
-//}
-//
-//func (f fruitCsv) ReadByCountry(country string, recs [][]string) []entity.Fruit {
-//	var fruits []entity.Fruit
-//	for _, rec := range recs {
-//		fruit, err := f.parseFruit(rec)
-//		if err != nil {
-//			continue
-//		}
-//		if country == fruit.Country {
-//			fruits = append(fruits, fruit)
-//		}
-//	}
-//	return fruits
-//}
-//
-//func (f fruitCsv) parseFruit(rec []string) (entity.Fruit, error) {
-//
-//	if len(rec) > f.numRecFields {
-//		logger.Log().Warn().
-//			Int("max", f.numRecFields).
-//			Int("current", len(rec)).
-//			Msg("number of record fields exceeded")
-//	}
-//
-//	recAux := make([]string, f.numRecFields)
-//	copy(recAux, rec)
-//	//fmt.Println("Rec:", rec)
-//	//fmt.Println("RecAux:", recAux)
-//
-//	recID, err := strconv.Atoi(recAux[0])
-//	if err != nil {
-//		logger.Log().Error().Err(err).Str("id", recAux[0]).Msgf("error parsing id field")
-//		return entity.Fruit{}, err
-//	}
-//
-//	//expDate, err := time.Parse(time.RFC3339, recAux[5])
-//	//if err != nil {
-//	//	logger.Log().Error().Err(err).Str("expiration_date", recAux[5]).
-//	//		Msgf("error parsing expiration_date field")
-//	//	return entity.Fruit{}, err
-//	//}
-//	//
-//	//createdAt, err := time.Parse(time.RFC3339, recAux[6])
-//	//if err != nil {
-//	//	logger.Log().Error().Err(err).Str("created_at", recAux[6]).
-//	//		Msgf("error parsing created_at field")
-//	//	return entity.Fruit{}, err
-//	//}
-//	//
-//	//updatedAt, err := time.Parse(time.RFC3339, recAux[7])
-//	//if err != nil {
-//	//	logger.Log().Error().Err(err).Str("updated_at", recAux[7]).
-//	//		Msgf("error parsing updated_at field")
-//	//	return entity.Fruit{}, err
-//	//}
-//
-//	return entity.Fruit{
-//		ID:          recID,
-//		Name:        recAux[1],
-//		Description: recAux[2],
-//		Color:       recAux[3],
-//		Country:     recAux[4],
-//		//ExpirationDate: expDate,
-//		//CreatedAt:      createdAt,
-//		//UpdatedAt:      updatedAt,
-//	}, nil
-//}
+func (f fruit) getByName(name string, recs entity.Fruits) entity.Fruits {
+	fruits := entity.Fruits{}
+	for _, rec := range recs {
+		if name == rec.Name {
+			fruits = append(fruits, rec)
+		}
+	}
+	return fruits
+}
+
+func (f fruit) getByColor(color string, recs entity.Fruits) entity.Fruits {
+	fruits := entity.Fruits{}
+	for _, rec := range recs {
+		if color == rec.Color {
+			fruits = append(fruits, rec)
+		}
+	}
+	return fruits
+}
+
+func (f fruit) getByCountry(country string, recs entity.Fruits) entity.Fruits {
+	fruits := entity.Fruits{}
+	for _, rec := range recs {
+		if country == rec.Country {
+			fruits = append(fruits, rec)
+		}
+	}
+	return fruits
+}
