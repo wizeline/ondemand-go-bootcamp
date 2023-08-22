@@ -2,12 +2,13 @@ package repository
 
 import (
 	"errors"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 	"io/fs"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/configuration"
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/entity"
@@ -191,85 +192,3 @@ func (s *FruitCsvTestSuite) TestReadAll() {
 	}
 
 }
-
-//func TestFruitCsv_ReadAll(t *testing.T) {
-//	tests := []struct {
-//		name    string
-//		cfg     configuration.CsvDB
-//		exp     []entity.Fruit
-//		err     error
-//		wantErr bool
-//	}{
-//		{
-//			name:    "Invalid data file",
-//			cfg:     configuration.NewCsvDB("foo.csv", testDataDir),
-//			exp:     nil,
-//			err:     &CsvErr{&fs.PathError{}},
-//			wantErr: true,
-//		},
-//		//{
-//		//	name:     "Arbitrary data file",
-//		//	filePath: "foo.csv",
-//		//	//err:      &Err{},
-//		//	wantErr: true,
-//		//},
-//		//{
-//		//	name: "Invalid data file ",
-//		//},
-//		//{
-//		//	name: "Filter by ID",
-//		//	cfg:  configuration.NewCsvDB("fruits_valid.csv", testDataDir),
-//		//	args: args{filter: "id", value: "5"},
-//		//	exp: []entity.Fruit{
-//		//		{ID: 5, Name: "orange", Color: "orange"},
-//		//	},
-//		//	err:     nil,
-//		//	wantErr: false,
-//		//},
-//		//{
-//		//	name: "Filter by Name",
-//		//	cfg:  configuration.NewCsvDB("fruits_valid.csv", testDataDir),
-//		//	args: args{filter: "name", value: "apple"},
-//		//	exp: []entity.Fruit{
-//		//		{ID: 1, Name: "apple", Color: "red"},
-//		//		{ID: 2, Name: "apple", Color: "green"},
-//		//	},
-//		//	err:     nil,
-//		//	wantErr: false,
-//		//},
-//		//{
-//		//	name: "Filter by Color",
-//		//	cfg:  configuration.NewCsvDB("fruits_valid.csv", testDataDir),
-//		//	args: args{filter: "color", value: "green"},
-//		//	exp: []entity.Fruit{
-//		//		{ID: 2, Name: "apple", Color: "green"},
-//		//		{ID: 3, Name: "pear", Color: "green"},
-//		//		{ID: 8, Name: "lime", Color: "green"},
-//		//		{ID: 9, Name: "grape", Color: "green"},
-//		//	},
-//		//	err:     nil,
-//		//	wantErr: false,
-//		//},
-//	}
-//
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			repo, err := NewFruitCsv(tt.cfg)
-//			assert.NotNil(t, repo)
-//			assert.Nil(t, err)
-//
-//			out, err := repo.ReadAll()
-//			t.Logf("ERROR: %v", err)
-//			t.Logf("OUT: %v", out)
-//			if tt.wantErr {
-//				assert.NotNil(t, err)
-//				assert.Nil(t, repo)
-//				assert.IsType(t, tt.err, err)
-//				return
-//			}
-//			require.NotNil(t, out)
-//			assert.Len(t, tt.exp, len(out))
-//			assert.Equal(t, tt.exp, out)
-//		})
-//	}
-//}
