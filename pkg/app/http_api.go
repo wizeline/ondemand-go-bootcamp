@@ -3,14 +3,12 @@ package app
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/configuration"
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/controller"
-	"github.com/marcos-wz/capstone-go-bootcamp/internal/customtype"
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/logger"
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/repository"
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/service"
@@ -28,18 +26,6 @@ type apiHTTP struct {
 
 func NewApiHTTP() (ApiHTTP, func(), error) {
 	cfg := configuration.GetInstance()
-
-	// TODO: implement the validating of data file path
-	//filePath := fmt.Sprintf("../../%v/%v", dataDir, fileName)
-	//if err := validateDataFilePath(filePath); err != nil {
-	//	return nil, Err(err.Error())
-	//}
-
-	dbDrv := customtype.NewDriverDB(cfg.Database.Driver())
-	if dbDrv == customtype.UndefinedDriverDB {
-		return nil, nil, fmt.Errorf("database driver is not supported: %v", cfg.Database.Driver())
-	}
-	logger.Log().Debug().Str("type", dbDrv.String()).Msg("database driver")
 
 	// Dependencies
 	fruitRepo, err := repository.NewFruitCsv(cfg.Database.CSV)
