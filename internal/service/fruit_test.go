@@ -5,13 +5,13 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/entity"
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/repository"
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/service/mocks"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
 type FruitTestSuite struct {

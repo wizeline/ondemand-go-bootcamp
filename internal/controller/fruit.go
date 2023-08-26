@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/gorilla/mux"
-
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/entity"
+
+	"github.com/gorilla/mux"
 )
 
 var (

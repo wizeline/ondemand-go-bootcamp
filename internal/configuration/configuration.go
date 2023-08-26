@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/spf13/viper"
-
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/logger"
+
+	"github.com/spf13/viper"
 )
 
 var (

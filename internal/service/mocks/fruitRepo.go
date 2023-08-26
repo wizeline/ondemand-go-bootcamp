@@ -1,9 +1,9 @@
 package mocks
 
 import (
-	"github.com/stretchr/testify/mock"
-
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/entity"
+
+	"github.com/stretchr/testify/mock"
 )
 
 type FruitRepo struct {

@@ -5,10 +5,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/marcos-wz/capstone-go-bootcamp/internal/configuration"
+
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-
-	"github.com/marcos-wz/capstone-go-bootcamp/internal/configuration"
 )
 
 func NewHTTPServer(cfg configuration.Config, router *mux.Router) *http.Server {

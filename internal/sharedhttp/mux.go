@@ -2,11 +2,12 @@ package sharedhttp
 
 import (
 	"fmt"
-	"github.com/gorilla/mux"
 
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/configuration"
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/controller"
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/logger"
+
+	"github.com/gorilla/mux"
 )
 
 const apiPrefixFmt = "/api/v%d"
