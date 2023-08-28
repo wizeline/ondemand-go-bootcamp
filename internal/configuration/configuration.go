@@ -15,12 +15,14 @@ var (
 	once        sync.Once
 )
 
+// Config is the representation of the application's configuration.
 type Config struct {
 	AppVersion SemanticVersion
 	HTTP       HTTP
 	Database   Database
 }
 
+// GetInstance returns instance of the implemented configuration.
 func GetInstance() Config {
 	return cfgInstance
 }
@@ -34,6 +36,8 @@ func setDefaultConfig() {
 	viper.SetDefault("database.csv.data_dir", "./data")
 }
 
+// newConfig creates a new Config instance of type singleton.
+// The configuration instance can be configured only once.
 func newConfig() Config {
 	var cfg Config
 	once.Do(func() {

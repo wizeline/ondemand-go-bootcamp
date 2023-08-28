@@ -17,6 +17,7 @@ import (
 
 var _ Fruit = &fruitCsv{}
 
+// NewFruitCsv returns a new Fruit repository implementation with CSV database support.
 func NewFruitCsv(cfg configuration.CsvDB) (Fruit, error) {
 	if err := validateDataFile(cfg.FilePath()); err != nil {
 		return nil, &CsvErr{err}
@@ -37,6 +38,7 @@ type fruitCsv struct {
 	numFields int
 }
 
+// ReadAll returns all entity.Fruit records from the CSV database
 func (f fruitCsv) ReadAll() (entity.Fruits, error) {
 	filePath := f.cfg.FilePath()
 
@@ -86,18 +88,19 @@ func (f fruitCsv) ReadAll() (entity.Fruits, error) {
 	return fruits, nil
 }
 
+// Create adds a new entity.Fruit record into the CSV database.
 func (f fruitCsv) Create(_ entity.Fruit) error {
 	// TODO: implement me
 	return nil
 }
 
+// CreateAll adds a list of entity.Fruit records into the CSV database.
 func (f fruitCsv) CreateAll(_ entity.Fruits) error {
 	// TODO: implement me
 	return nil
 }
 
 func (f fruitCsv) parseFruit(record []string) (entity.Fruit, error) {
-
 	if len(record) != f.numFields {
 		logger.Log().Warn().
 			Str("required", fmt.Sprintf("%d/%d", len(record), f.numFields)).

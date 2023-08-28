@@ -2,6 +2,7 @@ package entity
 
 import "time"
 
+// Fruit is the representation of a Fruit object used to hold the business logic.
 type Fruit struct {
 	ID             int       `json:"id"`
 	Name           string    `json:"name"`
@@ -13,4 +14,5 @@ type Fruit struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 }
 
+// Fruits is a list of Fruit elements
 type Fruits []Fruit

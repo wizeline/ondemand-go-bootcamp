@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+// FruitSvc is a mock type for the FruitSvc type
 type FruitSvc struct {
 	mock.Mock
 }
@@ -20,7 +21,7 @@ func (o *FruitSvc) GetAll() (entity.Fruits, error) {
 	return args.Get(0).(entity.Fruits), args.Error(1)
 }
 
-// NewFruitSvc creates a new instance of FruitSvc.
+// NewFruitSvc creates a new instance of FruitSvc of type Mock.
 func NewFruitSvc() *FruitSvc {
 	return &FruitSvc{}
 }

@@ -17,6 +17,7 @@ const (
 
 var _ fmt.Stringer = FilterFruit("")
 
+// filterFruitMap is the supported Fruit filters.
 var filterFruitMap = map[string]FilterFruit{
 	"id":      idFilter,
 	"name":    nameFilter,
@@ -26,11 +27,13 @@ var filterFruitMap = map[string]FilterFruit{
 
 var _ Fruit = &fruit{}
 
+// Fruit is the interface that performs the core operations for fruits.
 type Fruit interface {
 	Get(filter, value string) (entity.Fruits, error)
 	GetAll() (entity.Fruits, error)
 }
 
+// FruitRepo is the abstraction of the fruit repository dependency.
 type FruitRepo interface {
 	ReadAll() (entity.Fruits, error)
 }
@@ -39,12 +42,14 @@ type fruit struct {
 	repo FruitRepo
 }
 
+// FilterFruit is the filter fruit data type
 type FilterFruit string
 
 func (f FilterFruit) String() string {
 	return string(f)
 }
 
+// NewFruit returns a new Fruit service implementation.
 func NewFruit(repo FruitRepo) Fruit {
 	logger.Log().Debug().
 		Str("service", "Fruit").
@@ -54,6 +59,7 @@ func NewFruit(repo FruitRepo) Fruit {
 	}
 }
 
+// Get returns a filtered list of entity.Fruit records from the repository.
 func (f fruit) Get(filter, value string) (entity.Fruits, error) {
 	if value == "" {
 		return nil, &FilterErr{ErrFilterValueEmpty}
@@ -90,6 +96,7 @@ func (f fruit) Get(filter, value string) (entity.Fruits, error) {
 	}
 }
 
+// GetAll returns all the entity.Fruit records from the repository.
 func (f fruit) GetAll() (entity.Fruits, error) {
 	return f.repo.ReadAll()
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/sharedhttp"
 )
 
+// ApiHTTP is an HTTP API interface that runs a http.Server with mux.Router support.
 type ApiHTTP interface {
 	Start()
 }
@@ -24,10 +25,14 @@ type apiHTTP struct {
 	server *http.Server
 }
 
+// NewApiHTTP returns a new ApiHTTP implementation.
+// It uses the configuration instance to set the components.
+// It provides the controllers, repository and service dependencies.
+// Moreover, implements the http.Server instance with sharedhttp.Mux router.
+// Returns an error if any of the dependency implementation gets failed.
 func NewApiHTTP() (ApiHTTP, func(), error) {
-	cfg := configuration.GetInstance()
-
 	// Dependencies
+	cfg := configuration.GetInstance()
 	fruitRepo, err := repository.NewFruitCsv(cfg.Database.CSV)
 	if err != nil {
 		return nil, nil, err
@@ -47,6 +52,8 @@ func NewApiHTTP() (ApiHTTP, func(), error) {
 	}, nil, nil
 }
 
+// Start runs the http API and quits doing a grateful shutdown.
+// To stop the server you must send a system interrupt signal usually through the `CTRL+C` command
 func (h apiHTTP) Start() {
 	go func() {
 		err := h.server.ListenAndServe()

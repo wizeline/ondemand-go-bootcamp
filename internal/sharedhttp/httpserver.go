@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// NewHTTPServer returns a new implementation of a http.Server with mux.Router support.
 func NewHTTPServer(cfg configuration.Config, router *mux.Router) *http.Server {
 	return &http.Server{
 		Handler:      handlers.LoggingHandler(os.Stdout, router),
