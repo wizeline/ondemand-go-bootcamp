@@ -1,26 +1,40 @@
 package controller
 
 import (
-	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"reflect"
 
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/repository"
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/service"
+
+	"github.com/go-chi/render"
 )
 
+const (
+	repoCsvErrType   errType = "RepositoryCSVError"
+	svcFilterErrType errType = "ServiceFilterError"
+)
+
+var _ fmt.Stringer = errType("")
+
 type errHTTP struct {
-	Code      int    `json:"code"`
-	ErrorType string `json:"status"`
-	Message   string `json:"message"`
+	Code      int     `json:"code"`
+	ErrorType errType `json:"status"`
+	Message   string  `json:"message"`
 }
 
-func errHTTPResponse(w http.ResponseWriter, err error) {
-	w.Header().Set("Content-Type", "application/json")
+type errType string
+
+func (e errType) String() string {
+	return string(e)
+}
+
+func errJSON(w http.ResponseWriter, r *http.Request, err error) {
 	errHttp := newErrHTTP(err)
-	w.WriteHeader(errHttp.Code)
-	_ = json.NewEncoder(w).Encode(errHttp)
+	render.Status(r, errHttp.Code)
+	render.JSON(w, r, errHttp)
 }
 
 func newErrHTTP(err error) errHTTP {
@@ -35,7 +49,7 @@ func newErrHTTP(err error) errHTTP {
 	case errors.As(err, &repoCsvErr):
 		return errHTTP{
 			Code:      http.StatusInternalServerError,
-			ErrorType: "RepositoryCSVError",
+			ErrorType: repoCsvErrType,
 			Message:   err.Error(),
 		}
 
@@ -43,7 +57,7 @@ func newErrHTTP(err error) errHTTP {
 	case errors.As(err, &svcFilterErr):
 		return errHTTP{
 			Code:      http.StatusUnprocessableEntity,
-			ErrorType: "ServiceFilterError",
+			ErrorType: svcFilterErrType,
 			Message:   err.Error(),
 		}
 
@@ -54,7 +68,7 @@ func newErrHTTP(err error) errHTTP {
 	default:
 		return errHTTP{
 			Code:      http.StatusBadRequest,
-			ErrorType: reflect.TypeOf(err).String(),
+			ErrorType: errType(reflect.TypeOf(err).String()),
 			Message:   err.Error(),
 		}
 	}

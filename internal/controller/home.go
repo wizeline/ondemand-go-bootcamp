@@ -1,42 +1,33 @@
 package controller
 
 import (
-	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 )
 
-var (
-	_ HTTP     = &homeHTTP{}
-	_ HomeHTTP = &homeHTTP{}
-)
+var _ HTTP = &Home{}
 
-// HomeHTTP set the routes and handler functions related to Home
-type HomeHTTP interface {
-	SetRoutes(r *mux.Router)
-	Home(w http.ResponseWriter, r *http.Request)
+// Home set the routes and handler functions related to the Home controller.
+type Home struct{}
+
+// NewHome returns a new Home implementation.
+func NewHome() Home {
+	return Home{}
 }
 
-type homeHTTP struct{}
-
-// NewHomeHTTP returns a new HomeHTTP implementation.
-func NewHomeHTTP() HomeHTTP {
-	return &homeHTTP{}
+// SetRoutes sets a fresh middleware stack for the Home controller's handle functions and mounts them to the provided sub router.
+func (h Home) SetRoutes(r chi.Router) {
+	r.Get("/", h.HomePage)
 }
 
-func (h homeHTTP) SetRoutes(r *mux.Router) {
-	r.HandleFunc("/", h.Home).Methods("GET")
-}
-
-// Home is a handler function that responses the home page in HTML format.
-func (homeHTTP) Home(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_, _ = fmt.Fprintf(w, `
+// HomePage is a handler function that responses the home page in HTML format.
+func (Home) HomePage(w http.ResponseWriter, r *http.Request) {
+	render.HTML(w, r, `
 		<H1>Welcome to the Capstone API</H1>
 		<H2>GO Bootcamp - Academy </H2>
 		<B>Gopher:</B> Marcos Jauregui <BR>
 		<B>Email:</B> marcos.jauregui@wizeline.com
 	`)
-	w.WriteHeader(http.StatusOK)
 }

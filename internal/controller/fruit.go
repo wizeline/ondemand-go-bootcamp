@@ -1,76 +1,70 @@
 package controller
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/entity"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 )
 
 var (
-	_ HTTP      = &fruitHTTP{}
-	_ FruitHTTP = &fruitHTTP{}
+	_ HTTP  = &fruit{}
+	_ Fruit = &fruit{}
 )
 
-// FruitHTTP set the routes and handler functions related to Fruit
-type FruitHTTP interface {
-	SetRoutes(r *mux.Router)
+// Fruit set the routes and handler functions related to the Fruit controller
+type Fruit interface {
+	SetRoutes(r chi.Router)
 	GetFruit(w http.ResponseWriter, r *http.Request)
 	GetFruits(w http.ResponseWriter, r *http.Request)
 }
 
-// FruitSvc is the abstraction of the fruit service dependency.
+// FruitSvc is the abstraction of the Fruit service dependency.
 type FruitSvc interface {
 	Get(filter, value string) (entity.Fruits, error)
 	GetAll() (entity.Fruits, error)
 }
 
-type fruitHTTP struct {
+type fruit struct {
 	svc FruitSvc
 }
 
-// NewFruitHTTP returns a new FruitHTTP implementation.
-func NewFruitHTTP(svc FruitSvc) FruitHTTP {
-	return &fruitHTTP{
+// NewFruit returns a new Fruit implementation.
+func NewFruit(svc FruitSvc) Fruit {
+	return &fruit{
 		svc: svc,
 	}
 }
 
-func (f fruitHTTP) SetRoutes(r *mux.Router) {
-	r.HandleFunc("/fruit/{filter}/{value}", f.GetFruit).Methods("GET")
-	r.HandleFunc("/fruits", f.GetFruits).Methods("GET")
+// SetRoutes sets a fresh middleware stack for the Fruit controller's handle functions and mounts them to the provided sub router.
+func (f fruit) SetRoutes(r chi.Router) {
+	r.Get("/fruit/{filter}/{value}", f.GetFruit)
+	r.Get("/fruits", f.GetFruits)
 }
 
 // GetFruit is a handler function that retrieve a list of filtered fruits in JSON format.
-func (f fruitHTTP) GetFruit(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	vars := mux.Vars(r)
+func (f fruit) GetFruit(w http.ResponseWriter, r *http.Request) {
+	filter := chi.URLParam(r, "filter")
+	value := chi.URLParam(r, "value")
 
-	fruit, err := f.svc.Get(vars["filter"], vars["value"])
+	fruits, err := f.svc.Get(filter, value)
 	if err != nil {
-		errHTTPResponse(w, err)
+		errJSON(w, r, err)
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(fruit); err != nil {
-		errHTTPResponse(w, err)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
+	render.JSON(w, r, fruits)
 }
 
 // GetFruits is a handler function that retrieve all the fruits in JSON format.
-func (f fruitHTTP) GetFruits(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
+func (f fruit) GetFruits(w http.ResponseWriter, r *http.Request) {
 	fruits, err := f.svc.GetAll()
 	if err != nil {
-		errHTTPResponse(w, err)
+		errJSON(w, r, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(fruits)
+	render.JSON(w, r, fruits)
 }

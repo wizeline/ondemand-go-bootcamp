@@ -3,6 +3,7 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-chi/chi/v5/middleware"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,28 +13,28 @@ import (
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/repository"
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/service"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
-type FruitHTTPTestSuite struct {
+type FruitTestSuite struct {
 	suite.Suite
 	svc *mocks.FruitSvc
 }
 
 func TestFruitTestSuite(t *testing.T) {
-	suite.Run(t, new(FruitHTTPTestSuite))
+	suite.Run(t, new(FruitTestSuite))
 }
 
-func (s *FruitHTTPTestSuite) SetupSuite() {
+func (s *FruitTestSuite) SetupSuite() {
 	svc := mocks.NewFruitSvc()
 	require.NotNil(s.T(), svc)
 	s.svc = svc
 }
 
-func (s *FruitHTTPTestSuite) TestGetFruit() {
+func (s *FruitTestSuite) TestGetFruit() {
 	type params struct {
 		filter string
 		value  string
@@ -57,7 +58,7 @@ func (s *FruitHTTPTestSuite) TestGetFruit() {
 		{
 			name:    "Empty",
 			params:  params{},
-			code:    http.StatusMovedPermanently,
+			code:    http.StatusNotFound,
 			svcResp: nil,
 			svcErr:  &service.FilterErr{Err: service.ErrFilterNotSupported},
 			wantErr: true,
@@ -133,16 +134,17 @@ func (s *FruitHTTPTestSuite) TestGetFruit() {
 
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
+			// Dependencies
 			s.svc.ExpectedCalls = nil
 			s.svc.On("Get", tt.params.filter, tt.params.value).
 				Return(tt.svcResp, tt.svcErr)
 			require.NotNil(t, s.svc)
 
-			ctrl := NewFruitHTTP(s.svc)
+			ctrl := NewFruit(s.svc)
 			require.NotNil(t, ctrl)
 
 			// Request
-			path := fmt.Sprintf("http://localhost:8080/api/v0/fruit/%v/%v",
+			path := fmt.Sprintf("/fruit/%v/%v",
 				tt.params.filter,
 				tt.params.value)
 			req, err := http.NewRequest("GET", path, nil)
@@ -150,9 +152,8 @@ func (s *FruitHTTPTestSuite) TestGetFruit() {
 
 			// Server instance
 			rr := httptest.NewRecorder()
-			router := mux.NewRouter()
-			router.HandleFunc("/api/v0/fruit/{filter}/{value}", ctrl.GetFruit)
-			router.ServeHTTP(rr, req)
+			srv := s.newRouter(ctrl)
+			srv.ServeHTTP(rr, req)
 
 			// Tests
 			assert.Equal(t, tt.code, rr.Code)
@@ -168,7 +169,7 @@ func (s *FruitHTTPTestSuite) TestGetFruit() {
 	}
 }
 
-func (s *FruitHTTPTestSuite) TestGetFruits() {
+func (s *FruitTestSuite) TestGetFruits() {
 	var testData = entity.Fruits{
 		{ID: 1, Name: "apple", Color: "red", Country: "Mexico"},
 		{ID: 2, Name: "apple", Color: "green", Country: "Mexico"},
@@ -210,18 +211,17 @@ func (s *FruitHTTPTestSuite) TestGetFruits() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			s.svc.ExpectedCalls = nil
 			s.svc.On("GetAll").Return(tt.svcResp, tt.svcErr)
-			ctrl := NewFruitHTTP(s.svc)
+			ctrl := NewFruit(s.svc)
 			require.NotNil(t, ctrl)
 
 			// Request
-			req, err := http.NewRequest("GET", "http://localhost:8080/api/v0/fruits", nil)
+			req, err := http.NewRequest("GET", "/fruits", nil)
 			require.Nil(t, err)
 
 			// Server instance
 			rr := httptest.NewRecorder()
-			router := mux.NewRouter()
-			router.HandleFunc("/api/v0/fruits", ctrl.GetFruits)
-			router.ServeHTTP(rr, req)
+			srv := s.newRouter(ctrl)
+			srv.ServeHTTP(rr, req)
 
 			// Tests
 			assert.Equal(t, tt.code, rr.Code)
@@ -235,4 +235,11 @@ func (s *FruitHTTPTestSuite) TestGetFruits() {
 			assert.EqualValues(t, tt.svcResp, resp)
 		})
 	}
+}
+
+func (s *FruitTestSuite) newRouter(ctrl HTTP) *chi.Mux {
+	r := chi.NewRouter()
+	r.Use(middleware.Logger)
+	ctrl.SetRoutes(r)
+	return r
 }

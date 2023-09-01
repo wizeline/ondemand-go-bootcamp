@@ -1,13 +1,15 @@
 package controller
 
-import "github.com/gorilla/mux"
+import (
+	"github.com/go-chi/chi/v5"
+)
 
 // HTTP controller for HTTP protocol.
 type HTTP interface {
-	// SetRoutes allocates routes into the given router pointer.
-	SetRoutes(router *mux.Router)
+	SetRoutes(r chi.Router)
 }
 
+// BasicMessage is the representation of a basic http JSON response.
 type BasicMessage struct {
 	Message string `json:"message"`
 }
