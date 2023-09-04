@@ -6,7 +6,6 @@ import (
 )
 
 func main() {
-
 	api, clean, err := app.NewApiHTTP()
 	if err != nil {
 		logger.Log().Fatal().Err(err).Msg("http rest api startup failed")

@@ -6,9 +6,13 @@ import (
 )
 
 var (
-	ErrFilePathEmpty   = errors.New("data file path empty")
-	ErrFilePathIsDir   = errors.New("data file path is a directory")
-	ErrFileModeInvalid = errors.New("invalid data file mode")
+	ErrFilePathEmpty   = errors.New("validData file path empty")
+	ErrFilePathIsDir   = errors.New("validData file path is a directory")
+	ErrFileModeInvalid = errors.New("invalid validData file mode")
+
+	ErrCSVRecordEmpty    = errors.New("csv record empty")
+	ErrTimeStringEmpty   = errors.New("unix epoch time string empty")
+	ErrInvalidTimeString = errors.New("invalid unix epoch time string")
 )
 
 type CsvErr struct {

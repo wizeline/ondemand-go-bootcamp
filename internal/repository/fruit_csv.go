@@ -4,15 +4,14 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
+	"github.com/marcos-wz/capstone-go-bootcamp/internal/configuration"
+	"github.com/marcos-wz/capstone-go-bootcamp/internal/entity"
+	"github.com/marcos-wz/capstone-go-bootcamp/internal/logger"
 	"io"
 	"os"
 	"reflect"
 	"strconv"
 	"strings"
-
-	"github.com/marcos-wz/capstone-go-bootcamp/internal/configuration"
-	"github.com/marcos-wz/capstone-go-bootcamp/internal/entity"
-	"github.com/marcos-wz/capstone-go-bootcamp/internal/logger"
 )
 
 var _ Fruit = &fruitCsv{}
@@ -24,7 +23,7 @@ func NewFruitCsv(cfg configuration.CsvDB) (Fruit, error) {
 	}
 
 	logger.Log().Debug().
-		Str("type", "FruitCsv").
+		Str("repo", "FruitCsv").
 		Str("file", cfg.FilePath()).
 		Msg("created repository")
 	return &fruitCsv{
@@ -100,7 +99,12 @@ func (f fruitCsv) CreateAll(_ entity.Fruits) error {
 	return nil
 }
 
+// parseFruit converts a Fruit CSV record to a valid entity.Fruit
 func (f fruitCsv) parseFruit(record []string) (entity.Fruit, error) {
+	if len(record) == 0 {
+		return entity.Fruit{}, ErrCSVRecordEmpty
+	}
+
 	if len(record) != f.numFields {
 		logger.Log().Warn().
 			Str("required", fmt.Sprintf("%d/%d", len(record), f.numFields)).
@@ -108,6 +112,7 @@ func (f fruitCsv) parseFruit(record []string) (entity.Fruit, error) {
 			Msg("parseFruit: wrong number of record fields")
 	}
 
+	// Preallocate a new Fruit CSV record with the same number of fields as the entity.Fruit
 	rec := make([]string, f.numFields)
 	copy(rec, record)
 
@@ -119,35 +124,35 @@ func (f fruitCsv) parseFruit(record []string) (entity.Fruit, error) {
 		return entity.Fruit{}, err
 	}
 
-	//expDate, err := time.Parse(time.RFC3339, rec[5])
-	//if err != nil {
-	//	logger.Log().Error().Err(err).Str("expiration_date", rec[5]).
-	//		Msgf("error parsing expiration_date field")
-	//	return entity.Fruit{}, err
-	//}
-	//
-	//createdAt, err := time.Parse(time.RFC3339, rec[6])
-	//if err != nil {
-	//	logger.Log().Error().Err(err).Str("created_at", rec[6]).
-	//		Msgf("error parsing created_at field")
-	//	return entity.Fruit{}, err
-	//}
-	//
-	//updatedAt, err := time.Parse(time.RFC3339, rec[7])
-	//if err != nil {
-	//	logger.Log().Error().Err(err).Str("updated_at", rec[7]).
-	//		Msgf("error parsing updated_at field")
-	//	return entity.Fruit{}, err
-	//}
+	expDate, err := parseUnixEpoch(rec[5])
+	if err != nil {
+		logger.Log().Error().Err(err).Str("expiration_date", rec[5]).
+			Msgf("error parsing expiration_date field")
+		return entity.Fruit{}, err
+	}
+
+	createdAt, err := parseUnixEpoch(rec[6])
+	if err != nil {
+		logger.Log().Error().Err(err).Str("created_at", rec[6]).
+			Msgf("error parsing created_at field")
+		return entity.Fruit{}, err
+	}
+
+	updatedAt, err := parseUnixEpoch(rec[7])
+	if err != nil {
+		logger.Log().Error().Err(err).Str("updated_at", rec[7]).
+			Msgf("error parsing updated_at field")
+		return entity.Fruit{}, err
+	}
 
 	return entity.Fruit{
-		ID:          recID,
-		Name:        rec[1],
-		Description: rec[2],
-		Color:       rec[3],
-		Country:     rec[4],
-		//ExpirationDate: expDate,
-		//CreatedAt:      createdAt,
-		//UpdatedAt:      updatedAt,
+		ID:             recID,
+		Name:           rec[1],
+		Description:    rec[2],
+		Color:          rec[3],
+		Country:        rec[4],
+		ExpirationDate: expDate,
+		CreatedAt:      createdAt,
+		UpdatedAt:      updatedAt,
 	}, nil
 }

@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/entity"
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/logger"
@@ -114,7 +115,7 @@ func (f fruit) getById(id int, recs entity.Fruits) entity.Fruits {
 func (f fruit) getByName(name string, recs entity.Fruits) entity.Fruits {
 	fruits := entity.Fruits{}
 	for _, rec := range recs {
-		if name == rec.Name {
+		if strings.EqualFold(name, rec.Name) {
 			fruits = append(fruits, rec)
 		}
 	}
@@ -124,7 +125,7 @@ func (f fruit) getByName(name string, recs entity.Fruits) entity.Fruits {
 func (f fruit) getByColor(color string, recs entity.Fruits) entity.Fruits {
 	fruits := entity.Fruits{}
 	for _, rec := range recs {
-		if color == rec.Color {
+		if strings.EqualFold(color, rec.Color) {
 			fruits = append(fruits, rec)
 		}
 	}
@@ -134,7 +135,7 @@ func (f fruit) getByColor(color string, recs entity.Fruits) entity.Fruits {
 func (f fruit) getByCountry(country string, recs entity.Fruits) entity.Fruits {
 	fruits := entity.Fruits{}
 	for _, rec := range recs {
-		if country == rec.Country {
+		if strings.EqualFold(country, rec.Country) {
 			fruits = append(fruits, rec)
 		}
 	}

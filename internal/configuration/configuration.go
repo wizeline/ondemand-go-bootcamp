@@ -28,7 +28,8 @@ func GetInstance() Config {
 }
 
 func setDefaultConfig() {
-	viper.SetDefault("http.address", ":8080")
+	viper.SetDefault("http.host", "0.0.0.0")
+	viper.SetDefault("http.port", 8080)
 	viper.SetDefault("http.shutdown.timeout", time.Second*15)
 	viper.SetDefault("application.version", "v0.0.0")
 	viper.SetDefault("database.driver", "csv")
@@ -49,7 +50,8 @@ func newConfig() Config {
 		cfg = Config{
 			AppVersion: SemanticVersion(viper.GetString("application.version")),
 			HTTP: HTTP{
-				address:         viper.GetString("http.address"),
+				host:            viper.GetString("http.host"),
+				port:            viper.GetInt("http.port"),
 				shutdownTimeout: viper.GetDuration("http.shutdown.timeout"),
 			},
 			Database: Database{
