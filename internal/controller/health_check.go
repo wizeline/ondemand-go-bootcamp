@@ -9,7 +9,7 @@ import (
 
 var _ HTTP = HealthCheck{}
 
-// HealthCheck checks the API health and performance.
+// HealthCheck is the system monitoring tool.
 type HealthCheck struct{}
 
 // NewHealthCheck returns a new HealthCheck implementation.
@@ -17,19 +17,14 @@ func NewHealthCheck() HealthCheck {
 	return HealthCheck{}
 }
 
-// SetRoutes sets a fresh middleware stack for the HealthCheck controller's handle functions and mounts them to the provided sub router.
+// SetRoutes sets a fresh middleware stack for the HealthCheck handle functions and mounts them to the provided sub router.
 func (h HealthCheck) SetRoutes(r chi.Router) {
 	r.Get("/healthz", h.heartbeat)
 }
 
-// heartbeat is a handler function that checks the heart rate.
+// heartbeat is a handler function that checks the heartbeat of the API.
 func (h HealthCheck) heartbeat(w http.ResponseWriter, r *http.Request) {
-
-	// TODO:
-	// - Add live external API check(ping)
-	// - Add database check.
-
-	render.JSON(w, r, BasicMessage{
+	render.JSON(w, r, basicMessage{
 		Message: http.StatusText(http.StatusOK),
 	})
 }

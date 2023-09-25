@@ -6,9 +6,9 @@ import (
 )
 
 var (
-	ErrFilterValueEmpty     = errors.New("filter empty")
-	ErrFilterNotSupported   = errors.New("filter not supported")
-	ErrFilterNotImplemented = errors.New("filter not implemented")
+	ErrFltrTypeEmpty  = errors.New("filter type empty")
+	ErrFltrValueEmpty = errors.New("filter value empty")
+	ErrFltrInvalid    = errors.New("invalid filter")
 )
 
 type FilterErr struct {

@@ -1,28 +1,24 @@
-package configuration
+package config
 
-import (
-	"path/filepath"
-)
+import "path/filepath"
 
-// Database contains the configurations of drivers supported by the database.
 type Database struct {
 	driver string
-	CSV    CsvDB
+	Csv    CsvDB
 }
 
-// Driver returns the configured database driver type, e.g. csv, json, postgres, etc..
-func (d Database) Driver() string {
-	return d.driver
+func (db Database) Driver() string {
+	return db.driver
 }
 
-// CsvDB holds and retrieves the configuration properties of the CSV database.
+// CsvDB holds and retrieves the config properties of the CSV database.
 type CsvDB struct {
 	fileName string
 	dataDir  string
 }
 
-// NewCsvDB returns a new CsvDB implementation.
-func NewCsvDB(fileName, dataDir string) CsvDB {
+// NewCsv returns a new CsvDB configuration implementation.
+func NewCsv(fileName, dataDir string) CsvDB {
 	return CsvDB{
 		fileName: fileName,
 		dataDir:  dataDir,

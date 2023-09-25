@@ -17,7 +17,7 @@ func NewHome() Home {
 	return Home{}
 }
 
-// SetRoutes sets a fresh middleware stack for the Home controller's handle functions and mounts them to the provided sub router.
+// SetRoutes sets a fresh middleware stack for the Home handle functions and mounts them to the provided sub router.
 func (h Home) SetRoutes(r chi.Router) {
 	r.Get("/", h.HomePage)
 }

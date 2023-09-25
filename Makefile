@@ -2,22 +2,22 @@ APP_BIN = capstone
 
 # Test controller layer
 test-controller:
-	go test ./internal/controller
+	go test -count=1 ./internal/controller
 
 # Test service layer
 test-service:
-	go test ./internal/service
+	go test -count=1 ./internal/service
 
 # Test repository layer
-test-repo:
-	go test ./internal/repository
+test-repository:
+	go test -count=1 ./internal/repository
 
 # Test the clean architecture's layers: controller, service and repository.
-test-clean-architecture:test-controller test-service test-repo
+test-clean-architecture:test-controller test-service test-repository
 
 # Run all tests
 test-all:
-	go test ./...
+	go test -count=1 ./...
 
 # Build the application
 build:

@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	repoCsvErrType   errType = "RepositoryCSVError"
-	svcFilterErrType errType = "ServiceFilterError"
+	repoCsvErrType     errType = "RepositoryCSVError"
+	repoDataApiErrType errType = "RepositoryDataAPIError"
+	svcFilterErrType   errType = "ServiceFilterError"
 )
 
 var _ fmt.Stringer = errType("")
@@ -39,21 +40,30 @@ func errJSON(w http.ResponseWriter, r *http.Request, err error) {
 
 func newErrHTTP(err error) errHTTP {
 	var (
-		repoCsvErr   *repository.CsvErr
-		svcFilterErr *service.FilterErr
+		repoCsvErr     *repository.CsvErr
+		repoDataApiErr *repository.DataApiErr
+		svcFilterErr   *service.FilterErr
 	)
 
 	switch {
 
 	// ###########  REPOSITORY ERRORS ###########
+
 	case errors.As(err, &repoCsvErr):
 		return errHTTP{
 			Code:      http.StatusInternalServerError,
 			ErrorType: repoCsvErrType,
 			Message:   err.Error(),
 		}
+	case errors.As(err, &repoDataApiErr):
+		return errHTTP{
+			Code:      http.StatusBadGateway,
+			ErrorType: repoDataApiErrType,
+			Message:   err.Error(),
+		}
 
 	// ########### SERVICE ERRORS ###########
+
 	case errors.As(err, &svcFilterErr):
 		return errHTTP{
 			Code:      http.StatusUnprocessableEntity,

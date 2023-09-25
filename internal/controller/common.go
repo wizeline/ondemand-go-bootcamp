@@ -9,7 +9,7 @@ type HTTP interface {
 	SetRoutes(r chi.Router)
 }
 
-// BasicMessage is the representation of a basic http JSON response.
-type BasicMessage struct {
+// basicMessage is the representation of a basic http JSON response.
+type basicMessage struct {
 	Message string `json:"message"`
 }

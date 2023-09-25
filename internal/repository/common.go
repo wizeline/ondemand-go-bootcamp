@@ -1,59 +1,124 @@
 package repository
 
 import (
-	"math"
+	"errors"
+	"io"
+	"net/http"
+	"net/url"
 	"os"
-	"strconv"
-	"strings"
-	"time"
+	"path/filepath"
+
+	"github.com/marcos-wz/capstone-go-bootcamp/internal/logger"
 )
 
-const dataFileMode = "-rw-------"
+const (
+	dataFileMode = os.FileMode(0600)
+	dataDirMode  = os.FileMode(0700)
+)
 
-func validateDataFile(filePath string) error {
-	if filePath == "" {
-		return ErrFilePathEmpty
+type HttpClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
+// checkDataDir validates the given data directory.
+func checkDataDir(dir string) error {
+	if dir == "" {
+		return ErrDirNameEmpty
 	}
-
-	fInfo, err := os.Stat(filePath)
+	info, err := os.Stat(dir)
 	if err != nil {
 		return err
 	}
-	if fInfo.IsDir() {
-		return ErrFilePathIsDir
+	if !info.IsDir() {
+		return ErrIsNotDir
 	}
-	if fInfo.Mode().String() != dataFileMode {
-		return ErrFileModeInvalid
-	}
-
 	return nil
 }
 
-// parseUnixEpoch converts the given string time (unix time in seconds) to time.Time.
-// t should be in the format "1650536555.203"; decimal portion is optional.
-func parseUnixEpoch(t string) (time.Time, error) {
-	if t == "" {
-		return time.Time{}, ErrTimeStringEmpty
-	}
-	timeStr := strings.SplitN(t, ".", 2)
-	if length := len(timeStr); length == 0 || length > 2 {
-		return time.Time{}, ErrInvalidTimeString
-	}
-
-	sec, err := strconv.ParseInt(timeStr[0], 10, 64)
-	if err != nil {
-		return time.Time{}, ErrInvalidTimeString
-	}
-
-	var nsec int64
-	if len(timeStr) == 2 {
-		fraction, err := strconv.ParseFloat(timeStr[1], 64)
-		if err != nil {
-			return time.Time{}, ErrInvalidTimeString
+// createDataDir creates a new data directory with 0700 permissions.
+// If the data directory exists, it gets validated.
+func createDataDir(name string) error {
+	if err := checkDataDir(name); err != nil {
+		switch {
+		case errors.Is(err, os.ErrNotExist):
+			return os.Mkdir(name, dataDirMode)
+		default:
+			return err
 		}
-		fractionScale := math.Pow10(9 - len(timeStr[1]))
-		nsec = int64(fraction * fractionScale)
+	}
+	return nil
+}
+
+// checkDataFile validates the given data file.
+func checkDataFile(name string) error {
+	if name == "" {
+		return ErrFileNameEmpty
+	}
+	info, err := os.Stat(name)
+	if err != nil {
+		return err
+	}
+	if info.IsDir() {
+		return ErrFilePathIsDir
+	}
+	if info.Mode() != dataFileMode {
+		return ErrFileModeInvalid
+	}
+	return nil
+}
+
+// createDataFile creates a new data file with 0600 permissions.
+// If the data directory does not exist, creates a new one with 0700 permissions.
+// If the data file exists with wrong permissions gets fixed to 0600 permissions.
+func createDataFile(name, dir string) error {
+	if err := createDataDir(dir); err != nil {
+		return err
+	}
+	filePath := filepath.Join(dir, name)
+	if err := checkDataFile(filePath); err != nil {
+		switch {
+		case errors.Is(err, os.ErrNotExist):
+			return os.WriteFile(filePath, nil, dataFileMode)
+		case errors.Is(err, ErrFileModeInvalid):
+			return os.Chmod(filePath, dataFileMode)
+		default:
+			return err
+		}
+	}
+	return nil
+}
+
+// checkEndpoint consumes and validates the given endpoint.
+// It consumes the given endpoint using the GET method.
+// The scheme, domain and path properties are mandatory.
+// The response code must be StatusOK(200), otherwise returns error
+func checkEndpoint(endpoint string) error {
+	uri, err := url.ParseRequestURI(endpoint)
+	if err != nil {
+		return err
+	}
+	if uri.Path == "" {
+		return &url.Error{Op: "parse", URL: endpoint, Err: ErrURLPathEmpty}
 	}
 
-	return time.Unix(sec, nsec).UTC(), nil
+	req, err := http.NewRequest(http.MethodGet, uri.String(), nil)
+	if err != nil {
+		return err
+	}
+	client := http.DefaultClient
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			logger.Log().Error().Err(err).Msg("close response body failed")
+		}
+	}(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		return ErrInvalidRespCode
+	}
+	return nil
 }

@@ -1,14 +1,14 @@
-# Capstone - Fruit Stock
-Fruit stock is a system to manage fruit storage in a fruit shop.
-
+# Capstone - Cocktails Recipes
+A database recipes of drinks and cocktails.<br />
+It includes online resources like cocktail images, thumbnails, and videos.
 
 # System Features
 - Runs a Rest API over a http.Server instance with chi.Mux support.
 - The API configuration is set by system environment variables with the `CAPSTONE` word prefixed. If configuration is missed, set up the default one.
-- Easy design to support more database drivers, e.g., JSON, PostgreSQL, MongoDB, etc.
 - Builds, launch, and test operations can be done by make statements. Moreover, it is useful for CI/CD implementations.
+- Generates data files with proper permissions on the fly.
+- All the data files using on test cases are created on the fly, as well as removed.
 - Full logging support through the zerolog library.
-- Dates are based on `Epoch Unix Timestamp`.
 - Clean Architecture implementation:
   - Entity
   - Controller
@@ -17,38 +17,63 @@ Fruit stock is a system to manage fruit storage in a fruit shop.
 - Patterns:
   - Singleton pattern
   - Dependency Injection
-  - Repository pattern
 - Handling Errors:
   - Error propagation.
-  - Custom errors wrap the native error into it, useful for error type validations into the packages.
-  - The controller implements an error handler to determine the HTTP error code, response status and native error description.
+  - Custom errors.
+  - The controller error handler determines the HTTP error code, status and full error description.
 
 # How it works
-You can retrieve all the fruits, a specific one by id and a filter list by Name,Color,Country.
+You can retrieve all the cocktail recipes, a specific one by id and a filtered list.
 - Filter name and filter values are case insensitive.
 - Any wrong csv record is discarded.
+- Update database from a public API.
 
-To get all fruits in the storage, run a request to the following endpoint:
-```
-http://localhost:8080/api/v0/fruits
-```
-You can get a specific fruit by id and a filter list of them. The following filters are supported:
+# Cocktail recipes
+You can get all the cocktail recipes or a filtered list of them.
 
-Filtering fruits by ID:
+To retrieve all the recipes:
 ```
-http://localhost:8080/api/v0/fruit/id/1
+http://localhost:8080/api/v0/cocktails
 ```
-Filtering fruits by NAME:
+### Filtering recipes
+You can get a filtered list of cocktail recipes. The following are the supported filters: 
+
+Filtering recipes by ``ID``. Just numbers are allowed.
 ```
-http://localhost:8080/api/v0/fruit/name/apple
+http://localhost:8080/api/v0/cocktail/id/1
 ```
-Filtering fruits by COLOR:
+
+Filtering recipes by ``NAME``. Possible values: adam, acapulco, after sex, americano, affair, acid, afternoon, etc.
 ```
-http://localhost:8080/api/v0/fruit/color/green
+http://localhost:8080/api/v0/cocktail/name/afterglow
 ```
-Filtering fruits by COUNTRY:
+
+Filtering recipes by ``ALCOHOLIC``. Possible values: alcoholic, non alcoholic, etc.
 ```
-http://localhost:8080/api/v0/fruit/country/mexico
+http://localhost:8080/api/v0/cocktail/alcoholic/alcoholic
+```
+
+Filtering recipes by ``CATEGORY``. Possible values: cocktail, shot, drink, coffee, tea, etc.
+```
+http://localhost:8080/api/v0/cocktail/category/ordinary
+```
+
+Filtering recipes by ``INGREDIENT``. Possible values: gin, amaretto, soda, vodka, applejack, scotch, sugar, lemonade etc. 
+```
+http://localhost:8080/api/v0/cocktail/ingredient/vodka
+```
+
+Filtering recipes by ``GLASS``. Possible values: cocktail, collins shot, martini, highball, old-fashioned, etc.
+```
+http://localhost:8080/api/v0/cocktail/glass/martini
+```
+
+
+
+# Administrative Tasks:
+To update the database from the public API:
+```
+http://localhost:8080/api/v0/cocktail/updatedb
 ```
 
 # Run
@@ -59,13 +84,15 @@ make run
 
 # Testing
 The controller, service, and repository layers implement unit tests with mock support.
+All the data files required on the unit tests are created on the fly, as well as removed.<br />
+
 To run tests of each layer of the clean architecture, use the following commands.
 ```
 make test-controller
 make test-service
 make test-repository
 ```
-Optional. Run all tests of the architecture.
+Optional. Run all test layers of the architecture.
 ```
 make test-clean-architecture     
 ```

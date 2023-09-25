@@ -7,7 +7,7 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/marcos-wz/capstone-go-bootcamp/internal/configuration"
+	"github.com/marcos-wz/capstone-go-bootcamp/internal/config"
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/controller"
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/logger"
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/repository"
@@ -15,13 +15,9 @@ import (
 	"github.com/marcos-wz/capstone-go-bootcamp/internal/sharedhttp"
 )
 
-// ApiHTTP is an HTTP API implementation with http.Server and chi.Mux support.
-type ApiHTTP interface {
-	Start()
-}
-
-type apiHTTP struct {
-	cfg    configuration.Config
+// ApiHTTP represents an HTTP API with http.Server and chi.Mux support.
+type ApiHTTP struct {
+	cfg    config.Config
 	server *http.Server
 }
 
@@ -30,32 +26,32 @@ type apiHTTP struct {
 // It provides the controllers, repository and service dependencies.
 // Moreover, implements a http.Server instance with chi.Mux router support.
 // Returns an error if any implementation of the dependencies fails.
-func NewApiHTTP() (ApiHTTP, func(), error) {
-	// Dependencies
-	cfg := configuration.GetInstance()
-	fruitRepo, err := repository.NewFruitCsv(cfg.Database.CSV)
+func NewApiHTTP(cfg config.Config) (ApiHTTP, func(), error) {
+	// Cocktail dependencies
+	cRepo, err := repository.NewCocktail(cfg)
 	if err != nil {
-		return nil, nil, err
+		return ApiHTTP{}, nil, err
 	}
-	fruitSvc := service.NewFruit(fruitRepo)
+	cSvc := service.NewCocktail(cRepo)
 
 	// Router
-	r := sharedhttp.NewChi(cfg.AppVersion)
-	r.Add("HealthCheck", controller.NewHealthCheck())
-	r.Add("Home", controller.NewHome())
-	r.Add("Fruit", controller.NewFruit(fruitSvc))
-	r.RegisterRoutes()
+	router := sharedhttp.NewChi(cfg.Application)
+	router.Add("HealthCheck", controller.NewHealthCheck())
+	router.Add("Home", controller.NewHome())
+	router.Add("Cocktail", controller.NewCocktail(cSvc))
+	router.RegisterRoutes()
 
-	return apiHTTP{
+	return ApiHTTP{
 		cfg:    cfg,
-		server: sharedhttp.NewHTTPServer(cfg.HTTP, r.Router()),
+		server: sharedhttp.NewHTTPServer(cfg.HTTP.Server, router.Router()),
 	}, nil, nil
 }
 
 // Start runs the http API and quits doing a grateful shutdown.
 // To stop the server you must send a syscall.SIGINT signal usually through `CTRL+C`.
-func (h apiHTTP) Start() {
+func (h ApiHTTP) Start() {
 	go func() {
+		logger.Log().Info().Msgf("running http server on %v", h.cfg.HTTP.Server.Address())
 		err := h.server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Log().Fatal().Err(err).Msg("http server startup failed")
@@ -69,8 +65,9 @@ func (h apiHTTP) Start() {
 	h.shutdownApi()
 }
 
-func (h apiHTTP) shutdownApi() {
-	ctx, cancel := context.WithTimeout(context.Background(), h.cfg.HTTP.ShutdownTimeout())
+// shutdownApi performs tasks of safely shutting down processes and closing connections.
+func (h ApiHTTP) shutdownApi() {
+	ctx, cancel := context.WithTimeout(context.Background(), h.cfg.HTTP.Server.ShutdownTimeout())
 	defer cancel()
 
 	if err := h.server.Shutdown(ctx); err != nil {
